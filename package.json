@@ -1,0 +1,20 @@
+{
+  "name": "seis-eis-calculator",
+  "version": "1.0.0",
+  "description": "SEIS/EIS Calculator",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^35.1.4",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.1.2",
+    "bootstrap": "^5.3.5"
+  }
+}

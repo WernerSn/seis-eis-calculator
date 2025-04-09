@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEIS/EIS Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="text-center mb-3">
+            <img src="unlock-logo.svg" alt="Unlock Logo" class="calculator-logo">
+        </div>
+        <h1 class="text-center mb-4">SEIS/EIS Calculator</h1>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Your Numbers</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="tax-method-selector mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="calculationMethod" id="directTax" checked>
+                                        <label class="form-check-label" for="directTax">
+                                            I know my tax details
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="calculationMethod" id="income">
+                                        <label class="form-check-label" for="income">
+                                            Calculate from my income
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div id="taxDetailsInputs">
+                                    <div class="mb-3">
+                                        <label for="incomeTaxAmount" class="form-label">Income Tax Amount (£)</label>
+                                        <input type="number" class="form-control" id="incomeTaxAmount">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="incomeTaxRate" class="form-label">Income Tax Rate (%)</label>
+                                        <input type="number" class="form-control" id="incomeTaxRate">
+                                    </div>
+                                </div>
+
+                                <div id="incomeInputs" style="display: none;">
+                                    <div class="mb-3">
+                                        <label for="annualIncome" class="form-label">Annual Income (£)</label>
+                                        <input type="number" class="form-control" id="annualIncome">
+                                        <button class="btn btn-secondary mt-2" onclick="calculateTaxOnly()">Calculate Tax</button>
+                                    </div>
+                                    <div id="taxCalculationResults" style="display: none;">
+                                        <div class="tax-result-item">
+                                            <label>Calculated Tax Amount:</label>
+                                            <span id="calculatedTaxAmount">£0.00</span>
+                                        </div>
+                                        <div class="tax-result-item">
+                                            <label>Effective Tax Rate:</label>
+                                            <span id="effectiveTaxRate">0.00%</span>
+                                        </div>
+                                        <div class="tax-result-item">
+                                            <label>Top Marginal Rate:</label>
+                                            <span id="marginalTaxRate">0.00%</span>
+                                        </div>
+                                        <div class="tax-breakdown mt-2">
+                                            <small class="text-muted">Tax Breakdown:</small>
+                                            <div id="taxBreakdown" class="tax-breakdown-details"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="investmentAmount" class="form-label">Investment Amount (£)</label>
+                                    <input type="number" class="form-control" id="investmentAmount">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="anticipatedReturn" class="form-label">Anticipated Return (%)</label>
+                                    <input type="number" class="form-control" id="anticipatedReturn">
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="wantCgtRelief">
+                                        <label class="form-check-label" for="wantCgtRelief">
+                                            I want to claim Capital Gains Tax (CGT) relief on a previous gain
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="reinvestedGains" class="form-label">Re-invested Gains (£) - if claiming CGT relief</label>
+                                    <input type="number" class="form-control" id="reinvestedGains" disabled>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="isResidentialProperty" disabled>
+                                        <label class="form-check-label" for="isResidentialProperty">
+                                            This gain is from residential property
+                                        </label>
+                                    </div>
+                                    <button class="btn btn-secondary mt-2" onclick="calculateCGTRate()" disabled id="calculateCgtRateBtn">Calculate CGT Rate</button>
+                                    <div id="cgtCalculationResults" class="mt-2" style="display: none;">
+                                        <div class="tax-result-item">
+                                            <label>Effective CGT Rate:</label>
+                                            <span id="calculatedCgtRate">0.00%</span>
+                                        </div>
+                                        <div class="tax-breakdown mt-2">
+                                            <small class="text-muted">CGT Breakdown:</small>
+                                            <div id="cgtBreakdown" class="tax-breakdown-details"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="cgtRate" class="form-label">Capital Gains Tax Rate (%)</label>
+                                    <input type="number" class="form-control" id="cgtRate" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <div class="text-end mt-3">
+                            <button class="btn btn-primary" onclick="calculateBenefits()">Calculate Benefits</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <h3>Results</h3>
+                    <div class="col-md-6">
+                        <div class="results-container">
+                            <h4 class="scheme-title">SEIS Benefits</h4>
+                            <div class="result-item">
+                                <label>Income Tax Relief (50%):</label>
+                                <span id="seisIncomeTaxRelief">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Loss Relief:</label>
+                                <span id="seisLossRelief">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>CGT Deferral:</label>
+                                <span id="seisCgtDeferral">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>CGT Relief (50%):</label>
+                                <span id="seisCgtRelief">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Net Cost (if failed):</label>
+                                <span id="seisNetCost">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Anticipated Return (SEIS):</label>
+                                <span id="seisAnticipatedGrowth">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Tax-Free Gain:</label>
+                                <span id="seisTaxFreeGain">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Net Anticipated Profit:</label>
+                                <span id="seisNetProfit">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Return on Net Cost (%):</label>
+                                <span id="seisReturnOnNetCost">0.00%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="results-container">
+                            <h4 class="scheme-title">EIS Benefits</h4>
+                            <div class="result-item">
+                                <label>Income Tax Relief (30%):</label>
+                                <span id="eisIncomeTaxRelief">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Loss Relief:</label>
+                                <span id="eisLossRelief">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>CGT Deferral:</label>
+                                <span id="eisCgtDeferral">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>CGT Relief (50%):</label>
+                                <span id="eisCgtRelief">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Net Cost (if failed):</label>
+                                <span id="eisNetCost">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Anticipated Return (EIS):</label>
+                                <span id="eisAnticipatedGrowth">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Tax-Free Gain:</label>
+                                <span id="eisTaxFreeGain">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Net Anticipated Profit:</label>
+                                <span id="eisNetProfit">£0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <label>Return on Net Cost (%):</label>
+                                <span id="eisReturnOnNetCost">0.00%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html> 
