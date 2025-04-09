@@ -56,11 +56,11 @@ function calculateBenefits() {
     if (isDirectTax) {
         incomeTaxAmount = parseFloat(document.getElementById('incomeTaxAmount').value);
         incomeTaxRate = parseFloat(document.getElementById('incomeTaxRate').value);
-        effectiveRate = incomeTaxRate; // For direct tax input, use provided rate
+        effectiveRate = incomeTaxRate;
     } else {
         const annualIncome = parseFloat(document.getElementById('annualIncome').value);
-        incomeTaxRate = getTopMarginalRate(annualIncome, region); // used for relief calculations
-        effectiveRate = calculateTaxRate(annualIncome, region); // for display
+        incomeTaxRate = getTopMarginalRate(annualIncome, region);
+        effectiveRate = calculateTaxRate(annualIncome, region);
         incomeTaxAmount = calculateTaxAmount(annualIncome, region);
     }
 
@@ -68,7 +68,7 @@ function calculateBenefits() {
     document.getElementById('effectiveTaxRate').textContent = `${effectiveRate.toFixed(2)}%`;
     document.getElementById('marginalTaxRate').textContent = `${incomeTaxRate.toFixed(2)}%`;
 
-    const cgtRate = parseFloat(document.getElementById('cgtRate').value);
+    const cgtRate = parseFloat(document.getElementById('cgtRate').value || 0);
     const investmentAmount = parseFloat(document.getElementById('investmentAmount').value);
     const reinvestedGains = parseFloat(document.getElementById('reinvestedGains').value) || 0;
     const anticipatedReturnRate = parseFloat(document.getElementById('anticipatedReturn').value) || 0;
@@ -76,7 +76,7 @@ function calculateBenefits() {
     // Calculate SEIS benefits
     const seisIncomeTaxRelief = calculateSEISIncomeTaxRelief(investmentAmount);
     const seisLossRelief = calculateLossRelief(Math.min(investmentAmount, 100000), incomeTaxRate, 'seis');
-    const seisCgtDeferral = calculateCGTDeferral(reinvestedGains);
+    const seisCgtDeferral = calculateCGTDeferral(reinvestedGains, cgtRate);
     const seisCgtRelief = calculateSEISCGTRelief(reinvestedGains, investmentAmount, cgtRate);
     const seisNetCost = calculateNetCost(Math.min(investmentAmount, 100000), seisIncomeTaxRelief, seisLossRelief);
     const seisAnticipatedGrowth = calculateAnticipatedGrowth(Math.min(investmentAmount, 100000), anticipatedReturnRate);
@@ -87,7 +87,7 @@ function calculateBenefits() {
     // Calculate EIS benefits
     const eisIncomeTaxRelief = calculateEISIncomeTaxRelief(investmentAmount);
     const eisLossRelief = calculateLossRelief(Math.min(investmentAmount, 1000000), incomeTaxRate, 'eis');
-    const eisCgtDeferral = calculateCGTDeferral(reinvestedGains);
+    const eisCgtDeferral = calculateCGTDeferral(reinvestedGains, cgtRate);
     const eisNetCost = calculateNetCost(Math.min(investmentAmount, 1000000), eisIncomeTaxRelief, eisLossRelief);
     const eisAnticipatedGrowth = calculateAnticipatedGrowth(Math.min(investmentAmount, 1000000), anticipatedReturnRate);
     const eisTaxFreeGain = calculateTaxFreeGain(Math.min(investmentAmount, 1000000), eisAnticipatedGrowth);
@@ -207,15 +207,8 @@ function calculateLossRelief(investment, taxRate, scheme = 'eis') {
     return (investment - incomeTaxRelief) * (taxRate / 100);
 }
 
-function calculateCGTDeferral(reinvestedGains) {
-    const isResidential = document.getElementById('isResidentialProperty').checked;
-    const income = parseFloat(document.getElementById('annualIncome').value || 0);
-
-    const marginalRate = income <= 50270
-        ? (isResidential ? 18 : 10)
-        : (isResidential ? 24 : 20);
-
-    return reinvestedGains * (marginalRate / 100);
+function calculateCGTDeferral(reinvestedGains, cgtRate) {
+    return reinvestedGains * (cgtRate / 100);
 }
 
 function calculateSEISCGTRelief(reinvestedGains, investmentAmount, cgtRate) {
@@ -433,47 +426,25 @@ function calculateCGTRate() {
         return;
     }
 
-    // Calculate taxable gain
+    // Determine marginal CGT rate based on income
+    const marginalRate = income <= BASIC_RATE_LIMIT
+        ? (is_residential ? 18 : 10)
+        : (is_residential ? 24 : 20);
+
+    // Calculate taxable gain and tax amounts for display purposes
     const taxable_gain = Math.max(0, capital_gain - CGT_ALLOWANCE);
-    const total_income_plus_gain = income + taxable_gain;
+    const total_cgt = taxable_gain * (marginalRate / 100);
 
-    let gain_in_basic_band = 0;
-    let gain_in_higher_band = 0;
-
-    if (income < BASIC_RATE_LIMIT) {
-        const remaining_basic_band = BASIC_RATE_LIMIT - income;
-        gain_in_basic_band = Math.min(remaining_basic_band, taxable_gain);
-        gain_in_higher_band = taxable_gain - gain_in_basic_band;
-    } else {
-        gain_in_basic_band = 0;
-        gain_in_higher_band = taxable_gain;
-    }
-
-    // Choose rates based on asset type
-    const rate_set = is_residential ? CGT_RATES.residential : CGT_RATES.non_residential;
-
-    // Calculate tax
-    const basic_rate_tax = gain_in_basic_band * rate_set.basic;
-    const higher_rate_tax = gain_in_higher_band * rate_set.higher;
-    const total_cgt = basic_rate_tax + higher_rate_tax;
-
-    // Calculate effective rate
-    const effective_rate = (total_cgt / capital_gain) * 100;
-
-    // Show results with 2 decimal places
-    const formattedRate = effective_rate.toFixed(2);
+    // Show results
     document.getElementById('cgtCalculationResults').style.display = 'block';
-    document.getElementById('calculatedCgtRate').textContent = `${formattedRate}%`;
-    document.getElementById('cgtRate').value = formattedRate;
+    document.getElementById('calculatedCgtRate').textContent = `${marginalRate.toFixed(2)}%`;
+    document.getElementById('cgtRate').value = marginalRate.toFixed(2);
 
-    // Generate breakdown with rates shown to 2 decimal places
+    // Generate breakdown
     const breakdown = `
         <div>CGT Allowance: ${formatCurrency(CGT_ALLOWANCE)}</div>
         <div>Taxable Gain: ${formatCurrency(taxable_gain)}</div>
-        ${gain_in_basic_band > 0 ? 
-            `<div>Basic Rate Band (${(rate_set.basic * 100).toFixed(2)}%): ${formatCurrency(gain_in_basic_band)} = ${formatCurrency(basic_rate_tax)}</div>` : ''}
-        ${gain_in_higher_band > 0 ? 
-            `<div>Higher Rate Band (${(rate_set.higher * 100).toFixed(2)}%): ${formatCurrency(gain_in_higher_band)} = ${formatCurrency(higher_rate_tax)}</div>` : ''}
+        <div>CGT Rate: ${marginalRate.toFixed(2)}%</div>
         <div class="mt-2">Total CGT: ${formatCurrency(total_cgt)}</div>
     `;
     document.getElementById('cgtBreakdown').innerHTML = breakdown;
