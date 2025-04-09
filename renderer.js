@@ -55,6 +55,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const value = parseFloat(e.target.value).toFixed(1);
         returnDisplay.textContent = `${value}x`;
     });
+
+    // Toggle logic for breakdowns
+    document.getElementById('toggleSeisBreakdown').addEventListener('click', function (e) {
+        e.preventDefault();
+        const breakdown = document.getElementById('seisBreakdown');
+        const link = e.target;
+        if (breakdown.style.display === 'none') {
+            breakdown.style.display = 'block';
+            link.textContent = 'Hide Breakdown ▲';
+        } else {
+            breakdown.style.display = 'none';
+            link.textContent = 'Show Breakdown ▼';
+        }
+    });
+
+    document.getElementById('toggleEisBreakdown').addEventListener('click', function (e) {
+        e.preventDefault();
+        const breakdown = document.getElementById('eisBreakdown');
+        const link = e.target;
+        if (breakdown.style.display === 'none') {
+            breakdown.style.display = 'block';
+            link.textContent = 'Hide Breakdown ▲';
+        } else {
+            breakdown.style.display = 'none';
+            link.textContent = 'Show Breakdown ▼';
+        }
+    });
 });
 
 function calculateBenefits() {
@@ -128,6 +155,34 @@ function calculateBenefits() {
     document.getElementById('eisTaxFreeGain').textContent = formatCurrency(eisTaxFreeGain);
     document.getElementById('eisNetProfit').textContent = formatCurrency(eisNetProfit);
     document.getElementById('eisReturnOnNetCost').textContent = `${eisReturnOnNetCost.toFixed(2)}%`;
+
+    // SEIS Breakdown content
+    document.getElementById('seisBreakdown').innerHTML = `
+        <div><strong>Investment:</strong> ${formatCurrency(Math.min(investmentAmount, 100000))}</div>
+        <div>→ Income Tax Relief = 50% of investment = ${formatCurrency(seisIncomeTaxRelief)}</div>
+        <div>→ Net after relief: ${formatCurrency(Math.min(investmentAmount, 100000))} - ${formatCurrency(seisIncomeTaxRelief)} = ${formatCurrency(Math.min(investmentAmount, 100000) - seisIncomeTaxRelief)}</div>
+        <div>→ Loss Relief = ${(incomeTaxRate).toFixed(0)}% of remaining = ${formatCurrency(seisLossRelief)}</div>
+        <div><strong>Net Loss if failed:</strong> ${formatCurrency(seisNetCost)}</div>
+        <br>
+        <div>Anticipated Return = ${returnMultiple.toFixed(1)} × ${formatCurrency(Math.min(investmentAmount, 100000))} = ${formatCurrency(seisAnticipatedGrowth)}</div>
+        <div>→ Tax-Free Gain = ${formatCurrency(seisTaxFreeGain)}</div>
+        <div>→ Net Profit = ${formatCurrency(seisAnticipatedGrowth)} - ${formatCurrency(seisNetCost)} = ${formatCurrency(seisNetProfit)}</div>
+        <div><strong>Return on Net Cost:</strong> ${seisReturnOnNetCost.toFixed(2)}%</div>
+    `;
+
+    // EIS Breakdown content
+    document.getElementById('eisBreakdown').innerHTML = `
+        <div><strong>Investment:</strong> ${formatCurrency(Math.min(investmentAmount, 1000000))}</div>
+        <div>→ Income Tax Relief = 30% of investment = ${formatCurrency(eisIncomeTaxRelief)}</div>
+        <div>→ Net after relief: ${formatCurrency(Math.min(investmentAmount, 1000000))} - ${formatCurrency(eisIncomeTaxRelief)} = ${formatCurrency(Math.min(investmentAmount, 1000000) - eisIncomeTaxRelief)}</div>
+        <div>→ Loss Relief = ${(incomeTaxRate).toFixed(0)}% of remaining = ${formatCurrency(eisLossRelief)}</div>
+        <div><strong>Net Loss if failed:</strong> ${formatCurrency(eisNetCost)}</div>
+        <br>
+        <div>Anticipated Return = ${returnMultiple.toFixed(1)} × ${formatCurrency(Math.min(investmentAmount, 1000000))} = ${formatCurrency(eisAnticipatedGrowth)}</div>
+        <div>→ Tax-Free Gain = ${formatCurrency(eisTaxFreeGain)}</div>
+        <div>→ Net Profit = ${formatCurrency(eisAnticipatedGrowth)} - ${formatCurrency(eisNetCost)} = ${formatCurrency(eisNetProfit)}</div>
+        <div><strong>Return on Net Cost:</strong> ${eisReturnOnNetCost.toFixed(2)}%</div>
+    `;
 }
 
 function calculateTaxRate(income, region = 'uk') {

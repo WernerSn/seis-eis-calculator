@@ -121,4 +121,35 @@ h3 {
 hr {
     border-top: 2px solid #e9ecef;
     opacity: 1;
+}
+
+/* Breakdown toggle links */
+.mt-2 a {
+    display: inline-block;
+    color: #1b3a5a;
+    text-decoration: none;
+    padding: 8px 16px;
+    border: 1px solid #1b3a5a;
+    border-radius: 4px;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.mt-2 a:hover {
+    background-color: #1b3a5a;
+    color: white;
+    text-decoration: none;
+}
+
+/* Breakdown content styling */
+#seisBreakdown, #eisBreakdown {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 1rem;
+    line-height: 1.6;
+}
+
+#seisBreakdown div, #eisBreakdown div {
+    margin-bottom: 0.5rem;
 } 
