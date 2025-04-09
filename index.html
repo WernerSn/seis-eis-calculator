@@ -80,8 +80,12 @@
                                     <input type="number" class="form-control" id="investmentAmount">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="anticipatedReturn" class="form-label">Anticipated Return (%)</label>
-                                    <input type="number" class="form-control" id="anticipatedReturn">
+                                    <label for="anticipatedReturn" class="form-label">Return Multiple (0x - 10x)</label>
+                                    <div class="d-flex align-items-center">
+                                        <input type="range" class="form-range flex-grow-1" id="anticipatedReturn" 
+                                            min="0" max="10" step="0.1" value="0">
+                                        <span class="ms-2" id="returnMultipleDisplay">0.0x</span>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <div class="form-check">
@@ -92,7 +96,7 @@
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="reinvestedGains" class="form-label">Re-invested Gains (£) - if claiming CGT relief</label>
+                                    <label for="reinvestedGains" class="form-label">Capital Gains (£) - if claiming CGT relief</label>
                                     <input type="number" class="form-control" id="reinvestedGains" disabled>
                                     <div class="form-check mt-2">
                                         <input class="form-check-input" type="checkbox" id="isResidentialProperty" disabled>
@@ -132,6 +136,10 @@
                         <div class="results-container">
                             <h4 class="scheme-title">SEIS Benefits</h4>
                             <div class="result-item">
+                                <label>Max SEIS Allowance:</label>
+                                <span id="seisMaxAllowance">£0.00</span>
+                            </div>
+                            <div class="result-item">
                                 <label>Income Tax Relief (50%):</label>
                                 <span id="seisIncomeTaxRelief">£0.00</span>
                             </div>
@@ -148,7 +156,7 @@
                                 <span id="seisCgtRelief">£0.00</span>
                             </div>
                             <div class="result-item">
-                                <label>Net Cost (if failed):</label>
+                                <label>Net Loss (if failed):</label>
                                 <span id="seisNetCost">£0.00</span>
                             </div>
                             <div class="result-item">
@@ -173,6 +181,10 @@
                         <div class="results-container">
                             <h4 class="scheme-title">EIS Benefits</h4>
                             <div class="result-item">
+                                <label>Max EIS Allowance:</label>
+                                <span id="eisMaxAllowance">£0.00</span>
+                            </div>
+                            <div class="result-item">
                                 <label>Income Tax Relief (30%):</label>
                                 <span id="eisIncomeTaxRelief">£0.00</span>
                             </div>
@@ -189,7 +201,7 @@
                                 <span id="eisCgtRelief">£0.00</span>
                             </div>
                             <div class="result-item">
-                                <label>Net Cost (if failed):</label>
+                                <label>Net Loss (if failed):</label>
                                 <span id="eisNetCost">£0.00</span>
                             </div>
                             <div class="result-item">
