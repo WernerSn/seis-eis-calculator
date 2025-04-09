@@ -88,7 +88,7 @@ function calculateBenefits() {
 
     // Calculate SEIS benefits
     const seisIncomeTaxRelief = calculateSEISIncomeTaxRelief(investmentAmount, incomeTaxAmount);
-    const seisLossRelief = calculateLossRelief(Math.min(investmentAmount, 100000), incomeTaxRate, 'seis');
+    const seisLossRelief = calculateLossRelief(Math.min(investmentAmount, 100000), incomeTaxRate, 'seis', incomeTaxAmount);
     const seisCgtDeferral = calculateCGTDeferral(reinvestedGains, cgtRate);
     const seisCgtRelief = calculateSEISCGTRelief(reinvestedGains, investmentAmount, cgtRate);
     const seisNetCost = calculateNetCost(Math.min(investmentAmount, 100000), seisIncomeTaxRelief, seisLossRelief);
@@ -99,7 +99,7 @@ function calculateBenefits() {
 
     // Calculate EIS benefits
     const eisIncomeTaxRelief = calculateEISIncomeTaxRelief(investmentAmount, incomeTaxAmount);
-    const eisLossRelief = calculateLossRelief(Math.min(investmentAmount, 1000000), incomeTaxRate, 'eis');
+    const eisLossRelief = calculateLossRelief(Math.min(investmentAmount, 1000000), incomeTaxRate, 'eis', incomeTaxAmount);
     const eisCgtDeferral = calculateCGTDeferral(reinvestedGains, cgtRate);
     const eisNetCost = calculateNetCost(Math.min(investmentAmount, 1000000), eisIncomeTaxRelief, eisLossRelief);
     const eisAnticipatedGrowth = calculateAnticipatedGrowth(Math.min(investmentAmount, 1000000), returnMultiple);
@@ -214,15 +214,15 @@ function calculateEISIncomeTaxRelief(investment, incomeTaxAmount) {
     return Math.min(rawRelief, incomeTaxAmount);
 }
 
-function calculateLossRelief(investment, taxRate, scheme = 'eis') {
-    // First get the income tax relief based on scheme
-    const incomeTaxRelief = scheme === 'eis' 
-        ? calculateEISIncomeTaxRelief(investment, taxRate)
-        : calculateSEISIncomeTaxRelief(investment, taxRate);
-    
-    // Calculate loss relief using the net investment amount
-    return (investment - incomeTaxRelief) * (taxRate / 100);
+function calculateLossRelief(investment, marginalTaxRate, scheme = 'eis', incomeTaxAmount = 0) {
+    const incomeTaxRelief = scheme === 'eis'
+        ? calculateEISIncomeTaxRelief(investment, incomeTaxAmount)
+        : calculateSEISIncomeTaxRelief(investment, incomeTaxAmount);
+
+    const netLoss = investment - incomeTaxRelief;
+    return netLoss * (marginalTaxRate / 100);
 }
+
 
 function calculateCGTDeferral(reinvestedGains, cgtRate) {
     return reinvestedGains * (cgtRate / 100);
