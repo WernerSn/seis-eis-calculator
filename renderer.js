@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const returnDisplay = document.getElementById('returnMultipleDisplay');
     
     returnSlider.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value).toFixed(1);
+        const value = parseInt(e.target.value);
         returnDisplay.textContent = `${value}x`;
     });
 
@@ -95,9 +95,10 @@ function calculateBenefits() {
         effectiveRate = incomeTaxRate;
     } else {
         const annualIncome = parseFloat(document.getElementById('annualIncome').value);
+        // Use the values that were already calculated by calculateTaxOnly()
+        incomeTaxAmount = parseFloat(document.getElementById('calculatedTaxAmount').textContent.replace('£', ''));
+        effectiveRate = parseFloat(document.getElementById('effectiveTaxRate').textContent.replace('%', ''));
         incomeTaxRate = getTopMarginalRate(annualIncome, region);
-        effectiveRate = calculateTaxRate(annualIncome, region);
-        incomeTaxAmount = calculateTaxAmount(annualIncome, region);
     }
 
     // Update tax rate display
@@ -108,29 +109,32 @@ function calculateBenefits() {
     const maxSeisAllowance = Math.min(100000, incomeTaxAmount / 0.50);
     const maxEisAllowance = Math.min(1000000, incomeTaxAmount / 0.30);
 
-    const cgtRate = parseFloat(document.getElementById('cgtRate').value || 0);
     const investmentAmount = parseFloat(document.getElementById('investmentAmount').value);
+    const eligibleSeisInvestment = Math.min(investmentAmount, 100000, maxSeisAllowance);
+    const eligibleEisInvestment = Math.min(investmentAmount, 1000000, maxEisAllowance);
+
+    const cgtRate = parseFloat(document.getElementById('cgtRate').value || 0);
     const reinvestedGains = parseFloat(document.getElementById('reinvestedGains').value) || 0;
     const returnMultiple = parseFloat(document.getElementById('anticipatedReturn').value) || 0;
 
     // Calculate SEIS benefits
-    const seisIncomeTaxRelief = calculateSEISIncomeTaxRelief(investmentAmount, incomeTaxAmount);
-    const seisLossRelief = calculateLossRelief(Math.min(investmentAmount, 100000), incomeTaxRate, 'seis', incomeTaxAmount);
+    const seisIncomeTaxRelief = calculateSEISIncomeTaxRelief(eligibleSeisInvestment, incomeTaxAmount);
+    const seisLossRelief = calculateLossRelief(eligibleSeisInvestment, incomeTaxRate, 'seis', incomeTaxAmount);
     const seisCgtDeferral = calculateCGTDeferral(reinvestedGains, cgtRate);
     const seisCgtRelief = calculateSEISCGTRelief(reinvestedGains, investmentAmount, cgtRate);
-    const seisNetCost = calculateNetCost(Math.min(investmentAmount, 100000), seisIncomeTaxRelief, seisLossRelief);
-    const seisAnticipatedGrowth = calculateAnticipatedGrowth(Math.min(investmentAmount, 100000), returnMultiple);
-    const seisTaxFreeGain = calculateTaxFreeGain(Math.min(investmentAmount, 100000), seisAnticipatedGrowth);
+    const seisNetCost = calculateNetCost(eligibleSeisInvestment, seisIncomeTaxRelief, seisLossRelief);
+    const seisAnticipatedGrowth = calculateAnticipatedGrowth(eligibleSeisInvestment, returnMultiple);
+    const seisTaxFreeGain = calculateTaxFreeGain(eligibleSeisInvestment, seisAnticipatedGrowth);
     const seisNetProfit = seisAnticipatedGrowth - seisNetCost;
     const seisReturnOnNetCost = (seisNetProfit / seisNetCost) * 100;
 
     // Calculate EIS benefits
-    const eisIncomeTaxRelief = calculateEISIncomeTaxRelief(investmentAmount, incomeTaxAmount);
-    const eisLossRelief = calculateLossRelief(Math.min(investmentAmount, 1000000), incomeTaxRate, 'eis', incomeTaxAmount);
+    const eisIncomeTaxRelief = calculateEISIncomeTaxRelief(eligibleEisInvestment, incomeTaxAmount);
+    const eisLossRelief = calculateLossRelief(eligibleEisInvestment, incomeTaxRate, 'eis', incomeTaxAmount);
     const eisCgtDeferral = calculateCGTDeferral(reinvestedGains, cgtRate);
-    const eisNetCost = calculateNetCost(Math.min(investmentAmount, 1000000), eisIncomeTaxRelief, eisLossRelief);
-    const eisAnticipatedGrowth = calculateAnticipatedGrowth(Math.min(investmentAmount, 1000000), returnMultiple);
-    const eisTaxFreeGain = calculateTaxFreeGain(Math.min(investmentAmount, 1000000), eisAnticipatedGrowth);
+    const eisNetCost = calculateNetCost(eligibleEisInvestment, eisIncomeTaxRelief, eisLossRelief);
+    const eisAnticipatedGrowth = calculateAnticipatedGrowth(eligibleEisInvestment, returnMultiple);
+    const eisTaxFreeGain = calculateTaxFreeGain(eligibleEisInvestment, eisAnticipatedGrowth);
     const eisNetProfit = eisAnticipatedGrowth - eisNetCost;
     const eisReturnOnNetCost = (eisNetProfit / eisNetCost) * 100;
 
@@ -138,7 +142,7 @@ function calculateBenefits() {
     document.getElementById('seisMaxAllowance').textContent = formatCurrency(maxSeisAllowance);
     document.getElementById('seisIncomeTaxRelief').textContent = formatCurrency(seisIncomeTaxRelief);
     document.getElementById('seisLossRelief').textContent = formatCurrency(seisLossRelief);
-    document.getElementById('seisCgtDeferral').textContent = formatCurrency(seisCgtDeferral);
+    document.getElementById('seisCgtDeferral').textContent = 'Not applicable under SEIS';
     document.getElementById('seisCgtRelief').textContent = formatCurrency(seisCgtRelief);
     document.getElementById('seisNetCost').textContent = formatCurrency(seisNetCost);
     document.getElementById('seisAnticipatedGrowth').textContent = formatCurrency(seisAnticipatedGrowth);
@@ -158,17 +162,19 @@ function calculateBenefits() {
 
     // SEIS Breakdown content
     document.getElementById('seisBreakdown').innerHTML = `
-        <div><strong>Investment:</strong> ${formatCurrency(Math.min(investmentAmount, 100000))}</div>
-        <div>→ Income Tax Relief = 50% of investment = ${formatCurrency(seisIncomeTaxRelief)}</div>
-        <div>→ Net after relief: ${formatCurrency(Math.min(investmentAmount, 100000))} - ${formatCurrency(seisIncomeTaxRelief)} = ${formatCurrency(Math.min(investmentAmount, 100000) - seisIncomeTaxRelief)}</div>
-        <div>→ Loss Relief = ${(incomeTaxRate).toFixed(0)}% of remaining = ${formatCurrency(seisLossRelief)}</div>
-        <div><strong>Net Loss if failed:</strong> ${formatCurrency(seisNetCost)}</div>
-        <br>
-        <div>Anticipated Return = ${returnMultiple.toFixed(1)} × ${formatCurrency(Math.min(investmentAmount, 100000))} = ${formatCurrency(seisAnticipatedGrowth)}</div>
-        <div>→ Tax-Free Gain = ${formatCurrency(seisTaxFreeGain)}</div>
-        <div>→ Net Profit = ${formatCurrency(seisAnticipatedGrowth)} - ${formatCurrency(seisNetCost)} = ${formatCurrency(seisNetProfit)}</div>
-        <div><strong>Return on Net Cost:</strong> ${seisReturnOnNetCost.toFixed(2)}%</div>
-    `;
+    <div><strong>Investment:</strong> ${formatCurrency(Math.min(investmentAmount, 100000))}</div>
+    <div>→ Income Tax Relief = 50% of investment = ${formatCurrency(seisIncomeTaxRelief)}</div>
+    <div>→ Net after relief: ${formatCurrency(Math.min(investmentAmount, 100000))} - ${formatCurrency(seisIncomeTaxRelief)} = ${formatCurrency(Math.min(investmentAmount, 100000) - seisIncomeTaxRelief)}</div>
+    <div>→ Loss Relief = ${(incomeTaxRate).toFixed(0)}% of remaining = ${formatCurrency(seisLossRelief)}</div>
+    <div><strong>Net Loss if failed:</strong> ${formatCurrency(seisNetCost)}</div>
+    <div>→ CGT Deferral: <em>Not applicable under SEIS</em></div>
+    <br>
+    <div>Anticipated Return = ${returnMultiple.toFixed(1)} × ${formatCurrency(Math.min(investmentAmount, 100000))} = ${formatCurrency(seisAnticipatedGrowth)}</div>
+    <div>→ Tax-Free Gain = ${formatCurrency(seisTaxFreeGain)}</div>
+    <div>→ Net Profit = ${formatCurrency(seisAnticipatedGrowth)} - ${formatCurrency(seisNetCost)} = ${formatCurrency(seisNetProfit)}</div>
+    <div><strong>Return on Net Cost:</strong> ${seisReturnOnNetCost.toFixed(2)}%</div>
+`;
+
 
     // EIS Breakdown content
     document.getElementById('eisBreakdown').innerHTML = `
@@ -183,6 +189,28 @@ function calculateBenefits() {
         <div>→ Net Profit = ${formatCurrency(eisAnticipatedGrowth)} - ${formatCurrency(eisNetCost)} = ${formatCurrency(eisNetProfit)}</div>
         <div><strong>Return on Net Cost:</strong> ${eisReturnOnNetCost.toFixed(2)}%</div>
     `;
+
+    // SEIS warning
+    if (investmentAmount > eligibleSeisInvestment) {
+        const difference = investmentAmount - eligibleSeisInvestment;
+        document.getElementById('seisEligibilityWarning').style.display = 'block';
+        document.getElementById('seisEligibilityWarning').innerHTML =
+            `Only ${formatCurrency(eligibleSeisInvestment)} of your ${formatCurrency(investmentAmount)} SEIS investment is eligible. ` +
+            `The remainder (${formatCurrency(difference)}) will not qualify for tax relief.`;
+    } else {
+        document.getElementById('seisEligibilityWarning').style.display = 'none';
+    }
+
+    // EIS warning
+    if (investmentAmount > eligibleEisInvestment) {
+        const difference = investmentAmount - eligibleEisInvestment;
+        document.getElementById('eisEligibilityWarning').style.display = 'block';
+        document.getElementById('eisEligibilityWarning').innerHTML =
+            `Only ${formatCurrency(eligibleEisInvestment)} of your ${formatCurrency(investmentAmount)} EIS investment is eligible. ` +
+            `The remainder (${formatCurrency(difference)}) will not qualify for tax relief.`;
+    } else {
+        document.getElementById('eisEligibilityWarning').style.display = 'none';
+    }
 }
 
 function calculateTaxRate(income, region = 'uk') {
@@ -544,4 +572,97 @@ function getTopMarginalRate(income, region = 'uk') {
         if (income <= 125140) return 40;
         return 45;
     }
-} 
+}
+
+function calculateRateFromAmount() {
+    const taxAmount = parseFloat(document.getElementById('incomeTaxAmount').value);
+    const region = document.getElementById('directTaxRegion').value;
+
+    if (isNaN(taxAmount) || taxAmount <= 0) {
+        alert('Please enter a valid tax amount');
+        return;
+    }
+
+    // Step 1: Estimate income from tax paid
+    let estimatedIncome = taxAmount * 3; // Starting guess
+    let calculatedTax = 0;
+
+    for (let i = 0; i < 10; i++) {
+        calculatedTax = calculateTaxAmount(estimatedIncome, region);
+        if (Math.abs(calculatedTax - taxAmount) < 1) {
+            break;
+        }
+        // Update estimate using feedback loop
+        estimatedIncome = estimatedIncome * (taxAmount / calculatedTax);
+    }
+
+    // Step 2: Derive rates
+    const marginalRate = getTopMarginalRate(estimatedIncome, region);
+    const effectiveRate = (calculatedTax / estimatedIncome) * 100;
+
+    // Step 3: Output to DOM
+    document.getElementById('incomeTaxRate').value = marginalRate.toFixed(2);
+
+    // Show results container
+    const resultsContainer = document.getElementById('taxRateCalculationResults');
+    resultsContainer.style.display = 'block';
+
+    if (document.getElementById('estimatedIncomeOutput')) {
+        document.getElementById('estimatedIncomeOutput').textContent =
+            `Estimated Gross Income: ${formatCurrency(estimatedIncome)}`;
+    }
+
+    if (document.getElementById('effectiveTaxRateOutput')) {
+        document.getElementById('effectiveTaxRateOutput').textContent =
+            `Effective Tax Rate: ${effectiveRate.toFixed(2)}%`;
+    }
+}
+
+function clearForm() {
+    // Reset input fields
+    document.getElementById('incomeTaxAmount').value = '';
+    document.getElementById('incomeTaxRate').value = '';
+    document.getElementById('annualIncome').value = '';
+    document.getElementById('investmentAmount').value = '';
+    document.getElementById('reinvestedGains').value = '';
+    document.getElementById('cgtRate').value = '';
+    
+    // Reset slider
+    const returnSlider = document.getElementById('anticipatedReturn');
+    const returnDisplay = document.getElementById('returnMultipleDisplay');
+    returnSlider.value = 0;
+    returnDisplay.textContent = '0x';
+    
+    // Reset checkboxes
+    document.getElementById('wantCgtRelief').checked = false;
+    document.getElementById('isResidentialProperty').checked = false;
+    
+    // Reset disabled states
+    document.getElementById('reinvestedGains').disabled = true;
+    document.getElementById('isResidentialProperty').disabled = true;
+    document.getElementById('cgtRate').disabled = true;
+    document.getElementById('calculateCgtRateBtn').disabled = true;
+    
+    // Hide results sections
+    document.getElementById('taxCalculationResults').style.display = 'none';
+    document.getElementById('cgtCalculationResults').style.display = 'none';
+    document.getElementById('taxRateCalculationResults').style.display = 'none';
+    document.getElementById('seisEligibilityWarning').style.display = 'none';
+    document.getElementById('eisEligibilityWarning').style.display = 'none';
+    
+    // Reset all result values to zero
+    const resultElements = [
+        'seisMaxAllowance', 'seisIncomeTaxRelief', 'seisLossRelief', 'seisCgtDeferral',
+        'seisCgtRelief', 'seisNetCost', 'seisAnticipatedGrowth', 'seisTaxFreeGain',
+        'seisNetProfit', 'seisReturnOnNetCost', 'eisMaxAllowance', 'eisIncomeTaxRelief',
+        'eisLossRelief', 'eisCgtDeferral', 'eisNetCost', 'eisAnticipatedGrowth',
+        'eisTaxFreeGain', 'eisNetProfit', 'eisReturnOnNetCost'
+    ];
+    
+    resultElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = id.includes('ReturnOnNetCost') ? '0.00%' : '£0.00';
+        }
+    });
+}

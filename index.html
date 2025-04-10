@@ -38,12 +38,26 @@
 
                                 <div id="taxDetailsInputs">
                                     <div class="mb-3">
+                                        <label class="form-label">Tax Region</label>
+                                        <select class="form-control" id="directTaxRegion">
+                                            <option value="uk">England, Wales & Northern Ireland</option>
+                                            <option value="scotland">Scotland</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
                                         <label for="incomeTaxAmount" class="form-label">Income Tax Amount (£)</label>
                                         <input type="number" class="form-control" id="incomeTaxAmount">
+                                        <button class="btn btn-secondary mt-2" onclick="calculateRateFromAmount()">Calculate Tax Rate</button>
                                     </div>
                                     <div class="mb-3">
                                         <label for="incomeTaxRate" class="form-label">Income Tax Rate (%)</label>
                                         <input type="number" class="form-control" id="incomeTaxRate">
+                                    </div>
+                                    <div id="taxRateCalculationResults" class="tax-breakdown mt-2" style="display: none;">
+                                        <div class="tax-breakdown-details">
+                                            <div id="estimatedIncomeOutput"></div>
+                                            <div id="effectiveTaxRateOutput"></div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -80,11 +94,11 @@
                                     <input type="number" class="form-control" id="investmentAmount">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="anticipatedReturn" class="form-label">Return Multiple (0x - 10x)</label>
+                                    <label for="anticipatedReturn" class="form-label">Return Multiple (0x - 20x)</label>
                                     <div class="d-flex align-items-center">
                                         <input type="range" class="form-range flex-grow-1" id="anticipatedReturn" 
-                                            min="0" max="10" step="0.1" value="0">
-                                        <span class="ms-2" id="returnMultipleDisplay">0.0x</span>
+                                            min="0" max="20" step="1" value="0">
+                                        <span class="ms-2" id="returnMultipleDisplay">0x</span>
                                     </div>
                                 </div>
                                 <div class="mb-3">
@@ -125,8 +139,13 @@
 
                         <hr class="my-4">
                         <div class="text-end mt-3">
+                            <button class="btn btn-secondary me-2" onclick="clearForm()">Clear Form</button>
                             <button class="btn btn-primary" onclick="calculateBenefits()">Calculate Benefits</button>
                         </div>
+                    </div>
+                    <div class="col-12 mt-3">
+                        <div id="seisEligibilityWarning" class="alert alert-warning" style="display:none;"></div>
+                        <div id="eisEligibilityWarning" class="alert alert-warning" style="display:none;"></div>
                     </div>
                 </div>
 
